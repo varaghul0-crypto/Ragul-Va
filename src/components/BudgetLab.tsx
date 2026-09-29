@@ -1,0 +1,371 @@
+import React, { useState } from 'react';
+import { 
+  PieChart as PieIcon, 
+  Sparkles, 
+  CheckCircle2, 
+  AlertTriangle, 
+  HelpCircle, 
+  TrendingUp, 
+  ShieldCheck, 
+  RotateCcw
+} from 'lucide-react';
+import confetti from 'canvas-confetti';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
+
+export const BudgetLab: React.FC = () => {
+  const [totalBudget, setTotalBudget] = useState<number>(20000);
+  const [needsPercent, setNeedsPercent] = useState<number>(50); // e.g. 10,000
+  const [wantsPercent, setWantsPercent] = useState<number>(25); // e.g. 5,000
+  const [savingsPercent, setSavingsPercent] = useState<number>(15); // e.g. 3,000
+  const [emergencyPercent, setEmergencyPercent] = useState<number>(10); // e.g. 2,000
+
+  const needsAmount = Math.round((totalBudget * needsPercent) / 100);
+  const wantsAmount = Math.round((totalBudget * wantsPercent) / 100);
+  const savingsAmount = Math.round((totalBudget * savingsPercent) / 100);
+  const emergencyAmount = Math.round((totalBudget * emergencyPercent) / 100);
+
+  const totalAllocatedPercent = needsPercent + wantsPercent + savingsPercent + emergencyPercent;
+  const totalAllocatedAmount = needsAmount + wantsAmount + savingsAmount + emergencyAmount;
+  const remainingAmount = totalBudget - totalAllocatedAmount;
+
+  // Determine Budget Health
+  let healthStatus: 'BALANCED' | 'DEFICIT' | 'NEEDS SAVINGS' | 'HEALTHY & RESILIENT' = 'BALANCED';
+  let healthColor = '#64C98A';
+  let healthBg = '#E8FAF1';
+  let healthMessage = 'Well-proportioned allocation with reliable savings and emergency cushion.';
+
+  if (totalAllocatedPercent > 100) {
+    healthStatus = 'DEFICIT';
+    healthColor = '#FF806D';
+    healthBg = '#FFF3E7';
+    healthMessage = `You are spending ${(totalAllocatedPercent - 100)}% more than your total monthly stipend.`;
+  } else if (savingsPercent + emergencyPercent < 15) {
+    healthStatus = 'NEEDS SAVINGS';
+    healthColor = '#FFB86B';
+    healthBg = '#FFF9E6';
+    healthMessage = 'Aim for at least 15% combined savings and emergency fund to protect against unforeseen expenses.';
+  } else if (savingsPercent >= 20 && emergencyPercent >= 10 && totalAllocatedPercent <= 100) {
+    healthStatus = 'HEALTHY & RESILIENT';
+    healthColor = '#9B6CFF';
+    healthBg = '#F3EDFF';
+    healthMessage = 'Outstanding student financial discipline! Strong safety cushion built.';
+  }
+
+  const chartData = [
+    { name: 'Needs (50%)', amount: needsAmount, percent: needsPercent, color: '#78B7FF' },
+    { name: 'Wants (30%)', amount: wantsAmount, percent: wantsPercent, color: '#FF72D2' },
+    { name: 'Savings (10%)', amount: savingsAmount, percent: savingsPercent, color: '#9B6CFF' },
+    { name: 'Emergency (10%)', amount: emergencyAmount, percent: emergencyPercent, color: '#64C98A' },
+  ];
+
+  const handleApplyPreset = (preset: 'balanced' | 'frugal' | 'social') => {
+    if (preset === 'balanced') {
+      setNeedsPercent(50);
+      setWantsPercent(25);
+      setSavingsPercent(15);
+      setEmergencyPercent(10);
+    } else if (preset === 'frugal') {
+      setNeedsPercent(45);
+      setWantsPercent(15);
+      setSavingsPercent(25);
+      setEmergencyPercent(15);
+    } else {
+      setNeedsPercent(55);
+      setWantsPercent(30);
+      setSavingsPercent(10);
+      setEmergencyPercent(5);
+    }
+  };
+
+  const handleCelebrateBalance = () => {
+    if (healthStatus === 'BALANCED' || healthStatus === 'HEALTHY & RESILIENT') {
+      try {
+        confetti({
+          particleCount: 45,
+          spread: 60,
+          origin: { y: 0.6 },
+          colors: ['#64C98A', '#9B6CFF', '#FFD95A'],
+        });
+      } catch {}
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <span className="text-xs font-bold text-[#64C98A] uppercase tracking-wider block">
+            Gamified Cashflow Planner
+          </span>
+          <h2 className="font-heading font-extrabold text-2xl md:text-3xl text-[#17171C]">
+            Student Budget Lab
+          </h2>
+          <p className="text-sm text-[#777985] mt-1">
+            Simulate your monthly campus stipend, balance essentials with social life, and test your financial runway.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 self-start sm:self-center">
+          <div className="px-3.5 py-1.5 rounded-full bg-[#E8FAF1] text-[#64C98A] text-xs font-bold border border-emerald-200">
+            50-30-20 Smart Rule
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Sliders Allocation Deck (6 cols) */}
+        <div className="lg:col-span-6 soft-card p-6 md:p-8 bg-white flex flex-col justify-between">
+          <div>
+            {/* Monthly Budget Picker */}
+            <div className="flex items-center justify-between pb-4 mb-5 border-b border-slate-100">
+              <div>
+                <span className="text-xs font-bold text-[#777985] uppercase tracking-wider block">
+                  Synthetic Monthly Stipend
+                </span>
+                <div className="font-heading font-extrabold text-2xl text-[#17171C] mt-0.5 tabular-nums">
+                  ₹{totalBudget.toLocaleString('en-IN')}
+                </div>
+              </div>
+
+              {/* Presets */}
+              <div className="flex items-center gap-1.5">
+                {[15000, 20000, 30000].map((amt) => (
+                  <button
+                    key={amt}
+                    onClick={() => setTotalBudget(amt)}
+                    className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all ${
+                      totalBudget === amt
+                        ? 'bg-[#17171C] text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    ₹{amt / 1000}k
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Sliders */}
+            <div className="space-y-5">
+              {/* Needs */}
+              <div>
+                <div className="flex items-center justify-between text-sm font-semibold mb-1.5">
+                  <span className="text-slate-700 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#78B7FF]" />
+                    <span>Needs (Hostel, Mess, Books, Travel)</span>
+                  </span>
+                  <span className="font-extrabold text-[#17171C] tabular-nums">
+                    {needsPercent}% (₹{needsAmount.toLocaleString('en-IN')})
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={20}
+                  max={80}
+                  step={5}
+                  value={needsPercent}
+                  onChange={(e) => setNeedsPercent(Number(e.target.value))}
+                  className="w-full accent-[#78B7FF] cursor-pointer"
+                />
+              </div>
+
+              {/* Wants */}
+              <div>
+                <div className="flex items-center justify-between text-sm font-semibold mb-1.5">
+                  <span className="text-slate-700 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#FF72D2]" />
+                    <span>Wants (Cafes, Streaming, Outings)</span>
+                  </span>
+                  <span className="font-extrabold text-[#17171C] tabular-nums">
+                    {wantsPercent}% (₹{wantsAmount.toLocaleString('en-IN')})
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={5}
+                  max={60}
+                  step={5}
+                  value={wantsPercent}
+                  onChange={(e) => setWantsPercent(Number(e.target.value))}
+                  className="w-full accent-[#FF72D2] cursor-pointer"
+                />
+              </div>
+
+              {/* Savings */}
+              <div>
+                <div className="flex items-center justify-between text-sm font-semibold mb-1.5">
+                  <span className="text-slate-700 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#9B6CFF]" />
+                    <span>Savings (Future Courses, Career Prep)</span>
+                  </span>
+                  <span className="font-extrabold text-[#17171C] tabular-nums">
+                    {savingsPercent}% (₹{savingsAmount.toLocaleString('en-IN')})
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={40}
+                  step={5}
+                  value={savingsPercent}
+                  onChange={(e) => setSavingsPercent(Number(e.target.value))}
+                  className="w-full accent-[#9B6CFF] cursor-pointer"
+                />
+              </div>
+
+              {/* Emergency Buffer */}
+              <div>
+                <div className="flex items-center justify-between text-sm font-semibold mb-1.5">
+                  <span className="text-slate-700 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#64C98A]" />
+                    <span>Emergency Buffer (Medical, Urgent repair)</span>
+                  </span>
+                  <span className="font-extrabold text-[#17171C] tabular-nums">
+                    {emergencyPercent}% (₹{emergencyAmount.toLocaleString('en-IN')})
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={30}
+                  step={5}
+                  value={emergencyPercent}
+                  onChange={(e) => setEmergencyPercent(Number(e.target.value))}
+                  className="w-full accent-[#64C98A] cursor-pointer"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Preset Buttons */}
+          <div className="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+            <span className="text-xs font-bold text-slate-500">Apply Blueprint:</span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleApplyPreset('balanced')}
+                className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
+              >
+                Balanced 50/25/25
+              </button>
+              <button
+                onClick={() => handleApplyPreset('frugal')}
+                className="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-[#9B6CFF] text-xs font-bold transition-colors"
+              >
+                Super Saver
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Results & Health Status (6 cols) */}
+        <div className="lg:col-span-6 soft-card p-6 md:p-8 bg-white flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-bold text-[#777985] uppercase tracking-wider">
+                Budget Health Analysis
+              </span>
+              <span
+                className="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wide"
+                style={{ backgroundColor: healthBg, color: healthColor }}
+              >
+                {healthStatus}
+              </span>
+            </div>
+
+            {/* Big Health Banner */}
+            <div
+              className="p-5 rounded-2xl border mb-5 transition-colors"
+              style={{ backgroundColor: healthBg, borderColor: `${healthColor}40` }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shrink-0"
+                  style={{ backgroundColor: healthColor }}
+                >
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="font-heading font-extrabold text-base md:text-lg text-[#17171C]">
+                    Budget Health: {healthStatus}
+                  </div>
+                  <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                    {healthMessage}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Stat Cards Matrix */}
+            <div className="grid grid-cols-3 gap-3 mb-5">
+              <div className="p-3.5 rounded-2xl bg-[#F8F9FC] border border-slate-200/80 text-left">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight block">
+                  Savings Rate
+                </span>
+                <div className="font-heading font-extrabold text-lg text-[#9B6CFF] mt-0.5 tabular-nums">
+                  {savingsPercent}%
+                </div>
+                <span className="text-[10px] text-slate-400">₹{savingsAmount.toLocaleString('en-IN')}</span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#F8F9FC] border border-slate-200/80 text-left">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight block">
+                  Emergency Buffer
+                </span>
+                <div className="font-heading font-extrabold text-lg text-[#64C98A] mt-0.5 tabular-nums">
+                  ₹{emergencyAmount.toLocaleString('en-IN')}
+                </div>
+                <span className="text-[10px] text-slate-400">{emergencyPercent}% buffer</span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-[#F8F9FC] border border-slate-200/80 text-left">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight block">
+                  Unallocated
+                </span>
+                <div className={`font-heading font-extrabold text-lg mt-0.5 tabular-nums ${remainingAmount < 0 ? 'text-rose-600' : 'text-[#17171C]'}`}>
+                  {remainingAmount < 0 ? `-₹${Math.abs(remainingAmount).toLocaleString('en-IN')}` : `₹${remainingAmount.toLocaleString('en-IN')}`}
+                </div>
+                <span className="text-[10px] text-slate-400">
+                  {remainingAmount < 0 ? 'Overbudget!' : 'Free cushion'}
+                </span>
+              </div>
+            </div>
+
+            {/* Bar Chart Visualization */}
+            <div className="h-44 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    formatter={(val: any) => [`₹${Number(val ?? 0).toLocaleString('en-IN')}`, 'Allocated']}
+                    contentStyle={{ borderRadius: '12px', border: '1px solid #E2E8F0', fontSize: '11px' }}
+                  />
+                  <Bar dataKey="amount" radius={[8, 8, 0, 0]}>
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Action to validate */}
+          <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-xs text-slate-500 font-medium">
+              Ready to test this in simulated scenarios?
+            </span>
+            <button
+              onClick={handleCelebrateBalance}
+              className="flex items-center gap-1.5 px-4 py-2 bg-[#64C98A] hover:bg-[#52B877] text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-[0.98]"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Validate Plan (+30 XP)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

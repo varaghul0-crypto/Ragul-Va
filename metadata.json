@@ -1,0 +1,6 @@
+{
+  "name": "FinSafe Campus",
+  "description": "Learn Before You Pay. A privacy-first gamified financial-safety simulator for students to practice risky financial decisions inside synthetic simulations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
